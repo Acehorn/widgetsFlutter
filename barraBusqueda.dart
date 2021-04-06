@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:gnp_movil/TramitesAutosModule/CFDI/utils/constantesAutosDeducible.dart';
 
 class BarraBusquedaAutos extends StatefulWidget {
 
-  BarraBusquedaAutos({Key key,}) : super(key: key);
+ final String hint;
+
+  BarraBusquedaAutos({Key key, this.hint,}) : super(key: key);
 
   @override
   _BarraBusquedaAutosState createState() => _BarraBusquedaAutosState();
@@ -10,6 +13,8 @@ class BarraBusquedaAutos extends StatefulWidget {
 
 class _BarraBusquedaAutosState extends State<BarraBusquedaAutos> {
   String dropdownValue = 'No. Póliza';
+  TextEditingController controller = TextEditingController();
+  bool wasTap=false;
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -23,7 +28,7 @@ class _BarraBusquedaAutosState extends State<BarraBusquedaAutos> {
     borderRadius: BorderRadius.circular(4),
   color: Colors.white,
      boxShadow: [
-      BoxShadow(color: Colors.grey, spreadRadius: 1),
+      BoxShadow(color: wasTap==false ? greyColorGNP : naranjaColorGNP, spreadRadius: 1),
     ], 
   ),
                  width: size.width*0.90,
@@ -76,7 +81,15 @@ class _BarraBusquedaAutosState extends State<BarraBusquedaAutos> {
                 }).toList(),
     ),
                    ),
-              
+              Padding(
+                padding: const EdgeInsets.only(right: 5,),
+                child: Container(
+                  
+                  height: size.height*0.07,
+                  width: size.width*0.005,
+               color: wasTap==false ? greyColorGNP : naranjaColorGNP,
+                ),
+              ),
 
         Container(
            width: size.width*0.40, 
@@ -84,6 +97,7 @@ class _BarraBusquedaAutosState extends State<BarraBusquedaAutos> {
                 color: Colors.transparent,
                 
                    child: TextField(
+                     controller: controller,
                           decoration: new InputDecoration(
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
@@ -91,16 +105,34 @@ class _BarraBusquedaAutosState extends State<BarraBusquedaAutos> {
         errorBorder: InputBorder.none,
         disabledBorder: InputBorder.none,
   
-        hintText: "Hint here"),
+        hintText: widget.hint!=null ? widget.hint : ""),
+
+        onTap: (){
+          setState(() {
+            
+          });
+          wasTap=true;
+
+        },
+        onSubmitted: (String value){
+          setState(() {
+            
+          });
+          wasTap=false;
+        },
                    ),
                  ), 
 
-                 Container(
-                     width: size.width*0.15, 
-                        height: size.height*0.1,
-                   
-                   child: Icon(Icons.search),
-                                 decoration: BoxDecoration(
+                 GestureDetector(
+                   onTap: (){
+                        wasTap=false;
+                   },
+                   child: Container(
+                       width: size.width*0.127, 
+                          height: size.height*0.1,
+                     
+                     child: Icon(Icons.search),
+                                   decoration: BoxDecoration(
     borderRadius: BorderRadius.only(
     topRight:Radius.circular(4),
     bottomRight: Radius.circular(4),
@@ -108,6 +140,7 @@ class _BarraBusquedaAutosState extends State<BarraBusquedaAutos> {
   color: Color.fromRGBO(246, 249, 253, 1),
 
   ),
+                   ),
                  )
                 ],
     ),
