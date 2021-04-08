@@ -22,47 +22,37 @@ class PolizaSiniestroWindowState extends State<PolizaSiniestroWindow> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Column(
-  
+
       children: [
         SizedBox(height: 15,),
         Container(
 
 
                         decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(4),
+    borderRadius: BorderRadius.circular(8),
   color: Colors.white,
      boxShadow: [
        
-      BoxShadow(color: greyColorGNP, spreadRadius: 0.5),
+      BoxShadow(color: Colors.black12, spreadRadius: 1.9),
     ], 
   ),
-          height: size.height * 0.55,
+          height: size.height * 0.40,
           width: size.width * 0.90,
        child: Column(
   
          children: [
         //POLIZA
-           Container(
-              width: size.width * 0.90,
-              height: size.height*0.09,
-             child: Row( 
-               children: [
-                 Container(
-                   alignment: Alignment.centerRight,
-                  width: size.width * 0.25,
-              height: size.height*0.09,
-                 color: Colors.transparent,
-                   child: Text("Póliza: ", style: TextStyle(fontSize: 20),)),
-                Container(
-                   alignment: Alignment.centerLeft,
-                  width: size.width * 0.55,
-              height: size.height*0.09,
-                 color: Colors.transparent,
-                   child: Text(widget.poliza, style: TextStyle(fontSize: 20),)),
-                 Container(
-                          alignment: Alignment.centerRight,
-                  width: size.width * 0.1,
-             height: size.height*0.09,
+             Container(
+               
+                           width: size.width * 0.80,
+                           color: Colors.transparent,
+              height: size.height*0.04,
+                      child:  ListTile(
+
+                      trailing:    Container(
+                  alignment: Alignment.centerRight,
+              width: size.width*0.04,
+              
               color: Colors.transparent,
                    child: PopupMenuButton<WhyFarther>(
                     icon: Icon(Icons.more_vert, color: naranjaColorGNP,),
@@ -78,164 +68,119 @@ class PolizaSiniestroWindowState extends State<PolizaSiniestroWindow> {
     ),
   ],
 ),
-                 )
-               ],
-             ),
-           ),
+                 ),
+                        title: Row(
+                          children: [
+                 Container(
+                                   alignment: Alignment.centerLeft,
+              width: size.width*0.2,
+              height: size.height*0.09, 
+              color: Colors.transparent,  
+                              child: Text("Póliza: ", style: TextStyle(fontSize: 20, color: Color.fromRGBO(51, 68, 95, 1)))),
+                            Container(
+                                width: size.width*0.4,
+              height: size.height*0.09, 
+                              // height: size.height*0.04,
+                              child: Text(widget.poliza, style: TextStyle(fontSize: 20, color: Color.fromRGBO(51, 68, 95, 1), fontWeight: FontWeight.bold))),
+                          /*      Container(
+                   alignment: Alignment.centerLeft,
+              width: size.width*0.3,
+              height: size.height*0.09, 
+
+                 color: Colors.blue,
+                   child: Text(widget.poliza, style: TextStyle(fontSize: 20),)), */
+
+
+              
+                          ],
+                        ),
+                    ),
+                    ),
+        
+        
 
 // SINIESTRO
              Container(
-              width: size.width * 0.90,
-              height: size.height*0.09,
-               child: Row(
-                 children: [
-                   Container(
-                              width: size.width * 0.25,
-              height: size.height*0.09,
-              alignment: Alignment.centerRight,
-              color: Colors.transparent,
-                     child: Text("Siniestro:", style: TextStyle(fontSize: 16))),
-                    Container(
-                            width: size.width * 0.65,
-              height: size.height*0.09,
-                 color: Colors.transparent,
-                  alignment: Alignment.centerLeft,
-                      child: Text(" "+widget.siniestro, style: TextStyle(fontSize: 16))),
-                 ],
-               ),
-             ),
-               Container(
-                     width: size.width * 0.90,
-              height: size.height*0.09,
-                 child: Column(
-                   children: [
-                     Row(
-                       children: [
-                         Container(
-                              color: Colors.transparent,
-                               width: size.width * 0.20,
-                            height: size.height*0.04,
-                                 alignment: Alignment.centerRight,
-                           child: Text("EMITIDO A", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color.fromRGBO(51, 68, 95, 1)),)),
-                           Container(
-                                     color: Colors.transparent,
-                               width: size.width * 0.70,
-                            height: size.height*0.04,
-                           )
-                       ],
-                     ),
-                     Row(
-                       children: [
-                         Container(
-                              color: Colors.transparent,
-                           width: size.width*0.04,
-                           height: size.height*0.04,
-                         ),
-                         Container(
+                           width: size.width * 0.80,
                            color: Colors.transparent,
-                                  width: size.width*0.86,
-                                  height: size.height*0.04,
-                 alignment: Alignment.centerLeft,
-                           child: Text(widget.nombre, style: TextStyle(fontSize: 14),)),
-                       ],
-                     ),
-                   ],
-                 ),
-               ),
-                   Container(
-                     width: size.width * 0.90,
-              height: size.height*0.09,
-                 child: Column(
-                   children: [
-                     Row(
-                       children: [
-                         Container(
-                              color: Colors.transparent,
-                               width: size.width * 0.10,
-                            height: size.height*0.04,
-                                 alignment: Alignment.centerRight,
-                           child: Text("RFC", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color.fromRGBO(51, 68, 95, 1)),)),
-                           Container(
-                                     color: Colors.transparent,
-                               width: size.width * 0.80,
-                            height: size.height*0.04,
-                           )
-                       ],
-                     ),
-                     Row(
-                       children: [
-                         Container(
-                              color: Colors.transparent,
-                           width: size.width*0.04,
-                           height: size.height*0.04,
-                         ),
-                         Container(
-                           color: Colors.transparent,
-                                  width: size.width*0.86,
-                                  height: size.height*0.04,
-                 alignment: Alignment.centerLeft,
-                           child: Text(widget.rfc, style: TextStyle(fontSize: 14),)),
-                       ],
-                     ),
-                   ],
-                 ),
-               ),
-                  Container(
-                     width: size.width * 0.90,
-              height: size.height*0.09,
-                 child: Column(
-                   children: [
-                     Row(
-                       children: [
-                         Container(
-                              color: Colors.transparent,
-                               width: size.width * 0.15,
-                            height: size.height*0.04,
-                                 alignment: Alignment.centerRight,
-                           child: Text("MONTO", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color.fromRGBO(51, 68, 95, 1)),)),
-                           Container(
-                                     color: Colors.transparent,
-                               width: size.width * 0.75,
-                            height: size.height*0.04,
-                           )
-                       ],
-                     ),
-                     Row(
-                       children: [
-                         Container(
-                              color: Colors.transparent,
-                           width: size.width*0.04,
-                           height: size.height*0.04,
-                         ),
-                         Container(
-                          
-                           color: Colors.transparent,
-                                  width: size.width*0.86,
-                                  height: size.height*0.04,
-                 alignment: Alignment.centerLeft,
-                           child: Text(currencyMXN.format(widget.monto), style: TextStyle(fontSize: 14),)),
-                       ],
-                     ),
-                   ],
-                 ),
-               ),
-                     Container(
-                          width: size.width*0.90,
-                            height: size.height*0.05,
-                       child: Row(
-                       children: [
-                         Container(
-                             width: size.width*0.07,
-                             color: Colors.transparent,
-                             alignment: Alignment.centerRight,
-                           child: Icon(Icons.circle, color: circleAlert(widget.status), size: 10,)),
-                         Container(
-                           color: Colors.transparent,
-                                width: size.width*0.83,
-                           child: Text(" "+widget.status)),
+              height: size.height*0.04,
+                      child:  ListTile(
 
-                       ],
-                     )),
+                       
+                        title: Row(
+                          children: [
+                 Container(
+                              // height: size.height*0.04,
+                              child: Text("Siniestro: ", style: TextStyle(fontSize: 16, color: Color.fromRGBO(51, 68, 95, 1)))),
+                            Container(
+                              // height: size.height*0.04,
+                              child: Text(widget.siniestro, style: TextStyle(fontSize: 16, color: Color.fromRGBO(51, 68, 95, 1), fontWeight: FontWeight.bold))),
+                          ],
+                        ),
+                    ),
+                    ),
+                             Container(
+                     color: Colors.transparent,
+                     width: size.width * 0.80,
+              height: size.height*0.08,
+                 child: ListTile(
+                   title: Container(
+                   //  height: size.height*0.04,
+                     child: Text("EMITIDO A", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color.fromRGBO(51, 68, 95, 1)),)),
+                   subtitle: Container(
+                     height: size.height*0.04,
+                     alignment: Alignment.centerLeft,
+                     child: Text(widget.nombre, style: TextStyle(fontSize: 14, color: Color.fromRGBO(51, 68, 95, 1)))),
+                 ),
+               ),
+                   Container(
+                     color: Colors.transparent,
+                     width: size.width * 0.80,
+              height: size.height*0.08,
+                 child: ListTile(
+                   title: Container(
+                   //  height: size.height*0.04,
+                     child: Text("RFC", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color.fromRGBO(51, 68, 95, 1)),)),
+                   subtitle: Container(
+                     height: size.height*0.04,
+                     alignment: Alignment.centerLeft,
+                     child: Text(widget.rfc, style: TextStyle(fontSize: 14, color: Color.fromRGBO(51, 68, 95, 1)))),
+                 ),
+               ),
+                    Container(
+                     color: Colors.transparent,
+                     width: size.width * 0.80,
+              height: size.height*0.08,
+                 child: ListTile(
+                   title: Container(
+                   //  height: size.height*0.04,
+                     child: Text("MONTO", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color.fromRGBO(51, 68, 95, 1)),)),
+                   subtitle: Container(
+                     height: size.height*0.04,
+                     alignment: Alignment.centerLeft,
+                     child: Text(currencyMXN.format(widget.monto), style: TextStyle(fontSize: 14, color: Color.fromRGBO(51, 68, 95, 1)))),
+                 ),
+               ),
+                    Container(
+                           width: size.width * 0.80,
+                           color: Colors.transparent,
+              height: size.height*0.08,
+                      child:  ListTile(
+
+                       
+                        title: Row(
+                          children: [
+                            Container(
+                            //  height: size.height*0.04,
+                              child: Icon(Icons.circle, color: circleAlert(widget.status), size: 10,)),
+                            Container(
+                              // height: size.height*0.04,
+                              child: Text(" "+widget.status, style: TextStyle(fontSize: 14, color: Color.fromRGBO(51, 68, 95, 1)))),
+                          ],
+                        ),
+                    ),
+                    )
+                 
          ],
        ),
         ),
