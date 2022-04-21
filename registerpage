@@ -1,0 +1,795 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:gnp_movil/AnalyticsHandler/AnalyticsHandler.dart';
+import 'package:gnp_movil/RegisterModule/Models/modelsRegistro.dart';
+import 'package:gnp_movil/RegisterModule/RegisterPage.dart';
+import 'package:gnp_movil/RegisterModule/RegisterSMS.dart';
+import 'package:gnp_movil/RegisterModule/RegistroAsistido/RegistroAsistido.dart';
+import 'package:gnp_movil/RegisterModule/Widgets/expandedHeader.dart';
+import 'package:gnp_movil/TramitesAutosModule/CFDI/utils/constantesAutosDeducible.dart';
+import 'package:intl/intl.dart';
+import 'Providers/providersRegistro.dart';
+import 'Utils/constantes.dart';
+import 'Utils/validatorRegex.dart';
+import 'Widgets/alertaColorRegister.dart';
+import 'Widgets/datePickerCustom.dart';
+import 'Widgets/textFieldCalendar.dart';
+import 'Widgets/textFieldRegister.dart';
+
+class RegisterDatosPage extends StatefulWidget {
+/*   final String ramo;
+  final String poliza;
+  final dynamic certificado;
+  final String vigencia;
+  final bool avisoAceptado;
+  final bool mediosAceptado; */
+  final RegistroPersona registroPersona;
+/*   final String fechaNacSaved;
+  final String correoSaved;
+  final String telefonoSaved; */
+  RegisterDatosPage(
+      {Key key,
+      /*  @required this.ramo, @required this.poliza, this.certificado, this.vigencia, @required this.avisoAceptado, @required  this.mediosAceptado, this.fechaNacSaved, this.correoSaved, this.telefonoSaved ,*/ this.registroPersona})
+      : super(key: key);
+
+  @override
+  _RegisterDatosPageState createState() => _RegisterDatosPageState();
+}
+
+class _RegisterDatosPageState extends State<RegisterDatosPage> {
+//HEADER
+  bool expanded = false;
+  bool fechaNacimientoMostrar = true;
+  //CONTROLADORES FORM DATOS PAGE
+  TextEditingController correoController = new TextEditingController();
+  TextEditingController telefonoController = new TextEditingController();
+  TextEditingController fechaNacController = new TextEditingController();
+  TextEditingController rfcController = new TextEditingController();
+
+//VARIABLES CAMPOS DATO
+  String fechaNacField = "";
+  String fechaFormatedDate = "";
+  String emailField = "";
+  String telefonoField = "";
+
+  //VALIDACIONES
+  String errorTextEmail;
+  String errorTextTel;
+  String telefonoError = "";
+  String emailError = "";
+  bool enviado = false;
+
+  //UTILIDADES MENSAJES
+  bool errorRegistrado = false;
+  String errorMensajeRegistrado = "";
+  bool mensajeVisibilityEmail = false;
+  bool mensajeVisibilityTelefono = false;
+  bool mensajeTelefonoContacto = false;
+  bool mensajeTelefonoInvalido = false;
+  bool mensajeCorreoInvalido = false;
+  bool justOnetime = false; //solo permite mostrar el mensaje una vez
+  String fechaCambiando;
+// OBJETO DE REGISTRO PERSONA
+  RegistroPersona registroPersona;
+
+//focusnodes
+  FocusNode correoNode = new FocusNode();
+  FocusNode telefonoNode = new FocusNode();
+  FocusNode fechaNacNode = new FocusNode();
+  FocusNode rfcNode = new FocusNode();
+
+  List correos = [];
+  List telefonos = [];
+
+  String errorRFC;
+  String rfcField = "";
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.registroPersona != null) {
+      registroPersona = widget.registroPersona;
+
+      if (registroPersona.referenciaCBX.contains("CBX")) {
+        fechaNacimientoMostrar = false;
+        fechaNacField = widget.registroPersona.nacimientoFecha;
+      }
+    }
+    correoNode.addListener(_unFocusCorreo);
+    telefonoNode.addListener(_unFocusTelefono);
+    fechaNacNode.addListener(_unFocusFechaNac);
+    rfcNode.addListener(_unFocusRfc);
+  }
+
+  void _unFocusCorreo() {
+    debugPrint("CorreoField: " + correoNode.hasFocus.toString());
+    if (correoNode.hasFocus == false) {
+      mailValidate(emailField);
+    }
+    setState(() {});
+  }
+
+  Future<void> _unFocusTelefono() async {
+    debugPrint("telefonoField: " + telefonoNode.hasFocus.toString());
+    if (telefonoNode.hasFocus == false) {
+      final telV = await validaTelefonoR(context, telefonoField);
+      if (!telefonos.contains(telefonoField)) {
+        if (telV == null) {
+          setState(() {});
+          print("es nulo");
+
+          //mensajeVisibilityTelefono = true;
+          errorTextTel =
+              "El teléfono celular no es válido. Favor de verificar.";
+          telefonoError = telefonoField;
+          telefonos.add(telefonoField);
+          telefonoController.text = "";
+        }
+      } else {
+        setState(() {});
+        print("telefono aun invalido");
+        mensajeVisibilityTelefono = false;
+        //mensajeTelefonoInvalido = true;
+        //errorTextTel = null;
+        errorTextTel = "El teléfono celular sigue identificado como inválido.";
+      }
+
+      if (telV.valido) {
+        setState(() {});
+        print("valido");
+        mensajeVisibilityTelefono = false;
+        mensajeTelefonoInvalido = false;
+        errorTextTel = null;
+      }
+    }
+    setState(() {});
+  }
+
+  void _unFocusFechaNac() {
+    debugPrint("fechaNacField: " + fechaNacNode.hasFocus.toString());
+    if (fechaNacNode.hasFocus == false) {
+      if (fechaCambiando.length > 0) {
+        if (fechaCambiando.length == 10 &&
+            !fechaCambiando.contains("d") &&
+            !fechaCambiando.contains("m") &&
+            !fechaCambiando.contains("y")) {
+          String newSt = fechaCambiando.substring(0, 2);
+          print(newSt);
+          String newSt2 = int.parse(fechaCambiando.substring(3, 5)) < 13
+              ? fechaCambiando.substring(3, 5)
+              : "12";
+          print(newSt2);
+          String newSt3 = fechaCambiando.substring(6, 10);
+          print(newSt3);
+          String finalSt = "";
+
+          if (int.parse(newSt) < 32 &&
+              int.parse(newSt2) < 13 &&
+              int.parse(newSt3) > 1900 &&
+              int.parse(newSt3) < 2100) {
+            finalSt = newSt3 + newSt2 + newSt;
+          } else {
+            fechaNacController.text = "";
+          }
+
+          DateTime date = DateTime.parse(finalSt);
+          String formattedDate2 = DateFormat('yyyyMMdd').format(date);
+
+/* var dt = DateFormat().parse(formattedDate2); */
+
+          var formattedDate = DateFormat('dd/MM/yyyy').format(date);
+
+          if (rfcField.length == 13) {
+            if (formattedDate2.substring(2, 4) == rfcField.substring(4, 6) &&
+                formattedDate2.substring(4, 6) == rfcField.substring(6, 8) &&
+                formattedDate2.substring(6, 8) == rfcField.substring(8, 10)) {
+              errorRFC = null;
+            } else {
+              setState(() {});
+              errorRFC = "El RFC no concuerda con la fecha de nacimiento.";
+            }
+          }
+
+          if (!formattedDate.contains(fechaCambiando.substring(0, 2))) {
+            fechaNacController.text = "";
+          } else {
+            fechaNacController.text = formattedDate;
+            fechaFormatedDate = fechaNacController.text;
+            fechaNacField = formattedDate2;
+            registroPersona.nacimientoFecha = fechaNacField;
+          }
+        } else {
+          fechaNacController.text = "";
+        }
+      }
+    }
+    setState(() {});
+  }
+
+  void _unFocusRfc() {
+    debugPrint("rfcField: " + rfcNode.hasFocus.toString());
+    if (rfcNode.hasFocus == false) {
+      errorRFC = validateMobile(
+          rfcField,
+          "^([A-ZÑ\x26]{3,4}([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1])([A-Z]|[0-9]){2}([A]|[0-9]){1})?\u0024",
+          "Formato de RFC inválido");
+      if (fechaNacController.text.contains(rfcField.substring(8, 9)) &&
+          fechaNacController.text.contains(rfcField.substring(6, 7)) &&
+          fechaNacController.text.contains(rfcField.substring(4, 6))) {
+        errorRFC = null;
+      } else {
+        setState(() {});
+        if (fechaNacController.text != "") {
+          errorRFC = "El RFC no concuerda con la fecha de nacimiento.";
+        }
+      }
+    }
+    setState(() {});
+  }
+
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return Scaffold(
+      appBar: AppBar(
+        leading: GestureDetector(
+          onTap: () {
+            AnalyticsHandler.logEvent(name: "Datos_Registro_Page_Regresar");
+            Navigator.pop(context);
+          },
+          child: Icon(
+            Icons.arrow_back,
+            color: Color.fromRGBO(255, 107, 11, 1),
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.white,
+        title: Text(
+          "Registro",
+          style: TextStyle(color: Color.fromRGBO(51, 68, 95, 1)),
+        ),
+      ),
+      body: GestureDetector(
+        onTap: () {
+          correoNode.unfocus();
+          telefonoNode.unfocus();
+          fechaNacNode.unfocus();
+        },
+        child: SingleChildScrollView(
+            child: Column(
+          children: [
+            Stack(
+              children: [
+                Container(
+                    margin: const EdgeInsets.only(left: 0, right: 0, top: 90),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 50,
+                          padding: EdgeInsets.all(16),
+                          alignment: Alignment.centerLeft,
+                          child: Text("Confirma o modifica tu información"),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        TextFieldRegister(
+                        inputFormatter: [
+                        FilteringTextInputFormatter.deny(RegExp("([ ])")),
+                        ],
+                          onFocus: correoNode,
+                          hintText: "Correo electrónico",
+                          controller: correoController,
+                          errorText: errorTextEmail,
+                          obscureTextButton: false,
+                          lenghtField: 50,
+                          customChanged: (String value) async {
+                            setState(() {});
+                            emailField = value;
+                          },
+                        ),
+                        TextFieldRegister(
+                          onTap: () {
+                            setState(() {});
+                            if (justOnetime == false) {
+                              mensajeTelefonoContacto = true;
+                              new Future.delayed(new Duration(seconds: 10), () {
+                                setState(() {});
+                                justOnetime = true;
+                                mensajeTelefonoContacto = false;
+                              });
+                            }
+                          },
+                          hintText: "Teléfono",
+                          keyboardType: TextInputType.phone,
+                          controller: telefonoController,
+                          onFocus: telefonoNode,
+                          errorText: errorTextTel,
+                          obscureTextButton: false,
+                          regex: "^([0-9]){10}",
+                          lenghtField: 10,
+                          customChanged: (String value) async {
+                            setState(() {});
+
+                            telefonoField = value;
+                          },
+                        ),
+                        Visibility(
+                          visible: fechaNacimientoMostrar,
+                          child: TextFieldCalendar(
+                            onFocus: fechaNacNode,
+                            titulo: "Fecha de nacimiento",
+                            fechaController: fechaNacController,
+                            onChangedCustom: (String value) {
+                              setState(() {});
+
+                              /*   String fechacambiando; */
+                              fechaCambiando = value;
+
+                              setState(() {});
+                            },
+                            onTap: () {
+                              setState(() {});
+                              fechaNacController.text = "";
+                              fechaCambiando = "";
+                              _selectDate(context);
+                            },
+                          ),
+                        ),
+                        Visibility(
+                          visible: registroPersona.ramo == "V" &&
+                                  registroPersona.certificado == "INFO"
+                              ? true
+                              : false,
+                          child: TextFieldRegister(
+                            onFocus: rfcNode,
+                            hintText: "RFC",
+                            controller: rfcController,
+                            lenghtField: 16,
+                            errorText: errorRFC,
+                            customChanged: (String value) {
+                              rfcField = value;
+                            },
+                          ),
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 100,
+                        ),
+                        Container(
+                          alignment: Alignment.bottomCenter,
+                          margin: EdgeInsets.fromLTRB(16, 76, 16, 16),
+                          child: RaisedButton(
+                            onPressed: telefonoController.text.length == 10 &&
+                                    errorTextTel == null &&
+                                    correoController.text.contains("@") &&
+                                    errorTextEmail == null &&
+                                    fechaNacField != "" &&
+                                    errorRFC == null
+                                ? () async {
+                                    registroPersona.email =
+                                        correoController.text;
+                                    registroPersona.ladaMovil =
+                                        telefonoController.text.contains("55")
+                                            ? telefonoController.text
+                                                .substring(0, 2)
+                                            : telefonoController.text
+                                                .substring(0, 3);
+                                    registroPersona.telefonoMovil =
+                                        telefonoController.text.contains("55")
+                                            ? telefonoController.text
+                                                .substring(2, 10)
+                                            : telefonoController.text
+                                                .substring(3, 10);
+
+                                    /*    if(   registroPersona.ramo == "V" && registroPersona.certificado  == "INFO"){
+                                          
+                                         }   */
+                               
+                                    if (registroPersona.cveClienteUnico ==
+                                        null) {
+                                      final registrarR =
+                                          await registrarClienteAction(
+                                              context, registroPersona);
+
+                                      if (registrarR != null) {
+                                        var urlNormal =
+                                            registrarR.url.substring(2);
+                                        var urlPartida =
+                                            urlNormal.substring(24);
+                                        var arrayUrl = urlPartida.split("\/");
+                                        var hashOne = arrayUrl[0];
+                                        var hashTwo = arrayUrl[1];
+                                        final datosConcluirRegistr =
+                                            await datosConcluirRegistro(
+                                                context,
+                                                registroPersona.email,
+                                                false,
+                                                hashOne);
+                                        final datosConcluirRegistrPol =
+                                            await datosConcluirRegistroPoliza(
+                                                context,
+                                                registroPersona.poliza,
+                                                false,
+                                                registroPersona.nCertificado,
+                                                registroPersona.sistema,
+                                                hashOne);
+                                        registroPersona.cveClienteUnico =
+                                            registrarR.registrarClienteResponse
+                                                .cveClienteUnico;
+                                        registroPersona.idParticipante =
+                                            registrarR.registrarClienteResponse
+                                                .idParticipante;
+
+                                        final otpEnviado = await otpEnviar(
+                                            context,
+                                            registroPersona.cveClienteUnico);
+                                     
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  RegisterSmsPage(
+                                                    otpEnviado: otpEnviado,
+                                                    registroPersona:
+                                                        registroPersona,
+                                                    codigos: [],
+                                                    registroInc: false,
+                                                  )),
+                                        );
+                                      } else {
+                                        errorRegistrado = true;
+                                        final registrarError =
+                                            await errorRegistro(
+                                                context, registroPersona);
+
+                                        if (registrarError != null) {
+                                          setState(() {});
+                                          if (registrarError
+                                                  .body.fault.faultstring !=
+                                              "") {
+                                            if (registrarError
+                                                    .body.fault.faultstring
+                                                    .contains("REG005") ||
+                                                registrarError
+                                                    .body.fault.faultstring
+                                                    .contains("REG010")) {
+                                        
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        RegistroAsistido(
+                                                          personaRegistro:
+                                                              registroPersona,
+                                                        )),
+                                              );
+                                            } else if (registrarError
+                                                .body.fault.faultstring
+                                                .contains("REG004")) {
+                                            
+                                              errorMensajeRegistrado =
+                                                  "No es posible registrarte con una póliza fuera de vigencia. Favor de verificarla.";
+                                            } else if (registrarError
+                                                .body.fault.faultstring
+                                                .contains("REA001")) {
+                                          
+                                              errorMensajeRegistrado =
+                                                  "Lo sentimos, favor de verificar la fecha de nacimiento";
+                                            } else {
+                                          
+                                              if (registrarError.body.fault
+                                                  .detail.eotException.mensaje
+                                                  .contains(
+                                                      "Error en consultar usuario por correo")) {
+                                                errorMensajeRegistrado =
+                                                    "El cliente ya esta registrado";
+                                              } else {
+                                         
+                                                errorMensajeRegistrado =
+                                                    registrarError
+                                                        .body
+                                                        .fault
+                                                        .detail
+                                                        .eotException
+                                                        .mensaje;
+                                              }
+                                            }
+                                          } else {
+                                       
+                                            errorMensajeRegistrado =
+                                                "Ocurrio un error intente más tarde";
+                                          }
+                                        }
+
+/*    showMyDialog(context, "ERROR", "Lo sentimos, no fue posible realizar su registro"); */
+                                      }
+                                    } else {
+                                      final otpEnviado = await otpEnviar(
+                                          context,
+                                          registroPersona.cveClienteUnico);
+                                   
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                RegisterSmsPage(
+                                                  otpEnviado: otpEnviado,
+                                                  registroPersona:
+                                                      registroPersona,
+                                                  codigos: [],
+                                                )),
+                                      );
+                                    }
+                                  }
+                                : null,
+                            child: Container(
+                              width: 328,
+                              height: 50,
+                              child: Center(
+                                  child: Text(
+                                "Continuar",
+                                style: TextStyle(color: Colors.white),
+                              )),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
+                Positioned(
+                  child: ExpandedHeaderGnp(
+                    stepTitle: "Datos",
+                  ),
+                )
+              ],
+            ),
+          ],
+        )),
+      ),
+      floatingActionButton: floatingWidget(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
+    );
+  }
+
+  floatingWidget() {
+    if (mensajeVisibilityEmail) {
+      return Visibility(
+        visible: mensajeVisibilityEmail,
+        child: AlertaColorRegister(
+          colorBottom: Color.fromRGBO(231, 242, 252, 1),
+          colorSubtitle: Color.fromRGBO(51, 72, 108, 1),
+          colorTitle: Color.fromRGBO(86, 126, 173, 1),
+          iconLeading: Icon(
+            Icons.info_outline_rounded,
+            color: Colors.blue[800],
+          ),
+          subtitle: "El correo electrónico no es válido. Favor de verificar.",
+          subtitleSize: 16,
+          title: "Establecer correo electrónico",
+          tapClose: () {
+            setState(() {});
+            mensajeVisibilityEmail = false;
+          },
+          titleSize: 12,
+        ),
+      );
+    }
+
+    if (mensajeVisibilityTelefono) {
+      return Visibility(
+        visible: mensajeVisibilityTelefono,
+        child: AlertaColorRegister(
+          colorBottom: Color.fromRGBO(231, 242, 252, 1),
+          colorSubtitle: Color.fromRGBO(51, 72, 108, 1),
+          colorTitle: Color.fromRGBO(86, 126, 173, 1),
+          iconLeading: Icon(
+            Icons.info_outline_rounded,
+            color: Colors.blue[800],
+          ),
+          subtitle: "El teléfono celular no es válido. Favor de verificar.",
+          subtitleSize: 16,
+          title: "ERROR EN EL TELÉFONO CELULAR",
+          tapClose: () {
+            setState(() {});
+            mensajeVisibilityTelefono = false;
+          },
+          titleSize: 12,
+        ),
+      );
+    }
+
+    if (mensajeCorreoInvalido) {
+      return Visibility(
+        visible: mensajeCorreoInvalido,
+        child: AlertaColorRegister(
+          colorBottom: Color.fromRGBO(231, 242, 252, 1),
+          colorSubtitle: Color.fromRGBO(51, 72, 108, 1),
+          colorTitle: Color.fromRGBO(86, 126, 173, 1),
+          iconLeading: Icon(
+            Icons.info_outline_rounded,
+            color: Colors.blue[800],
+          ),
+          subtitle: "El correo electrónico sigue identificado como inválido",
+          subtitleSize: 16,
+          title: "ERROR EN EL CORREO ELECTRÓNICO",
+          tapClose: () {
+            setState(() {});
+            mensajeCorreoInvalido = false;
+          },
+          titleSize: 12,
+        ),
+      );
+    }
+
+    if (errorRegistrado) {
+      new Future.delayed(new Duration(seconds: 5), () {
+        errorRegistrado = false;
+        setState(() {});
+      });
+      return Visibility(
+        visible: errorRegistrado && errorMensajeRegistrado != "",
+        child: AlertaColorRegister(
+          colorBottom: Color.fromRGBO(248, 235, 237, 1),
+          colorSubtitle: Color.fromRGBO(51, 68, 95, 1),
+          colorTitle: Color.fromRGBO(154, 68, 67, 1),
+          iconLeading: Icon(
+            Icons.cancel_outlined,
+            color: Color.fromRGBO(154, 68, 67, 1),
+          ),
+          subtitle: errorMensajeRegistrado,
+          subtitleSize: 16,
+          title: "VALIDACIÓN",
+          tapClose: () {
+            setState(() {});
+            errorRegistrado = false;
+          },
+          titleSize: 12,
+        ),
+      );
+    }
+    if (mensajeTelefonoInvalido) {
+      new Future.delayed(new Duration(seconds: 5), () {
+        mensajeTelefonoInvalido = false;
+        setState(() {});
+      });
+      return Visibility(
+        visible: mensajeTelefonoInvalido,
+        child: AlertaColorRegister(
+          colorBottom: Color.fromRGBO(231, 242, 252, 1),
+          colorSubtitle: Color.fromRGBO(51, 72, 108, 1),
+          colorTitle: Color.fromRGBO(86, 126, 173, 1),
+          iconLeading: Icon(
+            Icons.info_outline_rounded,
+            color: Colors.blue[800],
+          ),
+          subtitle: "El teléfono celular sigue identificado como inválido",
+          subtitleSize: 16,
+          title: "ERROR EN EL TELÉFONO CELULAR",
+          tapClose: () {
+            setState(() {});
+            mensajeTelefonoInvalido = false;
+          },
+          titleSize: 12,
+        ),
+      );
+    }
+
+    if (mensajeTelefonoContacto) {
+      new Future.delayed(new Duration(seconds: 5), () {
+        mensajeTelefonoContacto = false;
+        setState(() {});
+      });
+      return Padding(
+        padding: const EdgeInsets.only(top: 26),
+        child: Visibility(
+            visible: mensajeTelefonoContacto,
+            child: Container(
+              margin: const EdgeInsets.only(top: 53.0),
+              child: AlertaColorRegister(
+                colorBottom: Color.fromRGBO(231, 242, 252, 1),
+                colorSubtitle: Color.fromRGBO(51, 72, 108, 1),
+                colorTitle: Color.fromRGBO(86, 126, 173, 1),
+                iconLeading: Icon(
+                  Icons.info_outline_rounded,
+                  color: Colors.blue[800],
+                ),
+                subtitle:
+                    "El teléfono celular sera utilizado como medio de contacto para notificarte operaciones realizadas o enviarte codigos de verificación requeridos en algunas transacciones.",
+                subtitleSize: 16,
+                title: "ESTABLECER TELÉFONO DE CONTACTO",
+                tapClose: () {
+                  setState(() {});
+                  mensajeTelefonoContacto = false;
+                },
+                titleSize: 12,
+              ),
+            )),
+      );
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    var initialDate = DateTime(2016, 11, 12);
+    final DateTime picked = await showDatePickerCustom(
+      useRootNavigator: false,
+      locale: const Locale('es', 'MX'),
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: initialDate,
+      lastDate: new DateTime.now(),
+      builder: (BuildContext context, Widget child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: Color.fromRGBO(255, 107, 11, 1),
+            accentColor: Color.fromRGBO(255, 107, 11, 1),
+            fixTextFieldOutlineLabel: true,
+            colorScheme: ColorScheme.light(
+              primary: Color.fromRGBO(255, 107, 11, 1),
+            ),
+            buttonTheme: ButtonThemeData(
+              textTheme: ButtonTextTheme.primary,
+            ),
+          ),
+          child: child,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {});
+      var date =
+          DateTime.fromMillisecondsSinceEpoch(picked.millisecondsSinceEpoch);
+      var formattedDate = DateFormat('dd/MM/yyyy').format(date);
+      var formattedDate2 = DateFormat('yyyyMMdd').format(date);
+      fechaNacController.text = formattedDate;
+      fechaFormatedDate = fechaNacController.text;
+      fechaNacField = formattedDate2;
+      registroPersona.nacimientoFecha = fechaNacField;
+      if (fechaNacController.text.contains(rfcField.substring(8, 9)) &&
+          fechaNacController.text.contains(rfcField.substring(6, 7)) &&
+          fechaNacController.text.contains(rfcField.substring(4, 6))) {
+        errorRFC = null;
+      } else {
+        setState(() {});
+        if (fechaNacController.text != "") {
+          errorRFC = "El RFC no concuerda con la fecha de nacimiento.";
+        }
+      }
+      /*  validacionPoliza();  */
+    }
+  }
+
+  mailValidate(String value) async {
+    setState(() {});
+
+    if (emailField == "") {
+      setState(() {});
+      emailError = "";
+      enviado = false;
+      mensajeCorreoInvalido = false;
+    }
+
+    if (!correos.contains(emailField)) {
+      final emailV = await validaEmailR(context, emailField);
+      if (emailV.valido == false) {
+        setState(() {});
+        //mensajeVisibilityEmail = true;
+        errorTextEmail =
+            "El correo electrónico no es válido. Favor de verificar.";
+        emailError = emailField;
+        correoController.clear();
+        correos.add(value);
+      } else {
+        setState(() {});
+        mensajeCorreoInvalido = false;
+        mensajeVisibilityEmail = false;
+        errorTextEmail = null;
+      }
+    } else {
+      setState(() {});
+      //mensajeCorreoInvalido = true;
+      errorTextEmail = "El correo electrónico sigue identificado como inválido";
+      mensajeVisibilityEmail = false;
+      //errorTextEmail = null;
+    }
+  }
+}
